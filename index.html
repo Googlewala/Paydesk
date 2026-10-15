@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b6b5d">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png">
+<title>Pay Desk</title>
+<style>
+:root{--bg:#f4f6f6;--sf:#fff;--ink:#17211f;--mu:#5f6f6c;--ln:#dbe3e1;--ac:#0b6b5d;--ai:#fff;--wn:#b4531a;--ok:#1d7a3f}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f1716;--sf:#172221;--ink:#e6efed;--mu:#93a5a2;--ln:#2a3a38;--ac:#38b8a3;--ai:#06201b;--wn:#e59355;--ok:#5fcf86}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Avenir Next","Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto;padding:20px 16px}
+h2{font-size:1.05rem;margin:0 0 10px}.mu{color:var(--mu);font-size:.88rem}
+.big{font-size:3rem;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:.85rem;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;padding:12px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+button{font:inherit;cursor:pointer}:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--ac);color:var(--ai);font-weight:700;margin-top:14px}
+.btn.o{background:none;border:1px solid var(--ln);color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--ln)}
+.row:first-of-type{border-top:0}.row small{display:block;color:var(--mu)}.n{font-weight:700;font-variant-numeric:tabular-nums}
+.tg{font-size:.75rem;padding:2px 9px;border-radius:99px;border:1px solid var(--ln);background:none;color:var(--mu)}
+.pd{color:var(--ok);border-color:var(--ok)}.pn{color:var(--wn);border-color:var(--wn)}
+.st{display:block;width:100%;text-align:left;background:none;border:0;padding:6px 0;color:var(--mu)}.st.a{color:var(--wn);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.chips button{padding:8px 14px;border-radius:99px;border:1px solid var(--ln);background:var(--bg);color:var(--ink)}.chips button[aria-pressed=true]{background:var(--ac);color:var(--ai);border-color:var(--ac)}
+.fab{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:50%;border:0;background:var(--ac);color:var(--ai);font-size:1.8rem;box-shadow:0 4px 14px #0003}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--ln);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:12px 4px;background:none;border:0;color:var(--mu);font-weight:600}nav button[aria-current=page]{color:var(--ac)}
+dialog{border:0;border-radius:16px;padding:20px;width:min(92vw,420px);background:var(--sf);color:var(--ink)}dialog::backdrop{background:#0006}
+.er{color:var(--wn);font-size:.85rem;min-height:1.2em;margin-top:8px}.empty{color:var(--mu);text-align:center;padding:18px 0}
+.bn{background:var(--sf);border:1px solid var(--wn);border-radius:12px;padding:12px;margin-bottom:14px}.bn div{display:flex;gap:8px;margin-top:8px}.bn button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--ln);background:none;color:var(--ink)}
+[hidden]{display:none!important}
+</style></head><body>
+<main>
+<section id="v-home"></section>
+<section id="v-pay" hidden>
+ <div class="card"><h2>Pay</h2>
+ <label for="pp">To</label><select id="pp"></select>
+ <label for="am">Amount (₹)</label><input id="am" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0">
+ <label for="nt">Note</label><input id="nt" maxlength="50" placeholder="Optional">
+ <label for="ap">Open in</label><select id="ap"><option value="upi">Any UPI app</option><option value="gpay">Google Pay</option><option value="phonepe">PhonePe</option><option value="paytm">Paytm</option></select>
+ <button class="btn" id="go">Continue to payment app</button><div class="er" id="pe" role="alert"></div>
+ <p class="mu">Saved as pending. You'll confirm it when you return.</p></div>
+</section>
+<section id="v-hist" hidden></section>
+<section id="v-people" hidden></section>
+<section id="v-me" hidden></section>
+</main>
+<button class="fab" id="fab" aria-label="Add expense">+</button>
+<nav><button data-v="home" aria-current="page">Home</button><button data-v="hist">History</button><button data-v="people">People</button><button data-v="me">Me</button></nav>
+
+<dialog id="dq"><h2>Add expense</h2>
+ <input id="qa" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="₹ Amount" aria-label="Amount">
+ <div class="chips" id="qc"></div>
+ <label for="qn">Note</label><input id="qn" maxlength="50" placeholder="Optional">
+ <button class="btn" id="qs">Save</button><button class="btn o" id="qx">Cancel</button><div class="er" id="qe"></div></dialog>
+
+<dialog id="dp"><h2>Add person or biller</h2>
+ <label for="nn">Name</label><input id="nn" placeholder="e.g. MP Electricity">
+ <label for="nu">UPI ID</label><input id="nu" placeholder="name@bank" autocapitalize="off">
+ <label for="nc">Type</label><select id="nc"><option>Person</option><option>Electricity</option><option>Water</option><option>Gas</option><option>Mobile / Internet</option><option>Rent</option><option>Other</option></select>
+ <label for="nd">Due day of month (optional)</label><input id="nd" type="number" min="1" max="31">
+ <button class="btn" id="ns">Save</button><button class="btn o" id="nx">Cancel</button><div class="er" id="ne"></div></dialog>
+
+<dialog id="du"><h2>Free limit reached</h2><p class="mu">Your free plan includes 20 payments a month. Upgrade for ₹20/month to keep paying. History and export always stay available.</p>
+ <button class="btn" id="ub">Upgrade for ₹20/month</button><button class="btn o" id="ux">Not now</button><div class="er" id="ue"></div></dialog>
+
+<script>
+/* ---- Settings: flip PRICING_ON to true when you are ready to charge ---- */
+var CONFIG={PRICING_ON:false,FREE_DAYS:30,FREE_LIMIT:20,PRICE:20};
+var CATS=["Food","Bills","Travel","Shopping","Health","Other"],K="paydesk.v2",S={people:[],txns:[],start:Date.now(),plan:false,days:[]};
+try{var r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+var $=function(i){return document.getElementById(i)},view="home",qcat="Food";
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function esc(s){var d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML}
+function inr(n){return "₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:2})}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function day(d){var x=d?new Date(d):new Date();return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")}
+function person(id){return S.people.filter(function(p){return p.id===id})[0]}
+function due(d){var n=new Date(),t=new Date(n.getFullYear(),n.getMonth(),d),b=new Date(n.getFullYear(),n.getMonth(),n.getDate());if(t<b)t=new Date(n.getFullYear(),n.getMonth()+1,d);return Math.round((t-b)/864e5)}
+function counts(t){return t.kind==="exp"||t.status==="paid"}
+if(S.days.indexOf(day())<0){S.days.push(day());S.days=S.days.slice(-400);save()}
+function streak(){var n=0,d=new Date();while(S.days.indexOf(day(d))>=0){n++;d.setDate(d.getDate()-1)}return n}
+function gateBlocked(){if(!CONFIG.PRICING_ON||S.plan)return false;
+ if((Date.now()-S.start)/864e5<=CONFIG.FREE_DAYS)return false;
+ var m=day().slice(0,7);return S.txns.filter(function(t){return t.kind==="pay"&&t.date.slice(0,7)===m}).length>=CONFIG.FREE_LIMIT}
+
+function show(v){view=v;["home","pay","hist","people","me"].forEach(function(x){$("v-"+x).hidden=x!==v});
+ document.querySelectorAll("nav button").forEach(function(b){b.removeAttribute("aria-current");if(b.dataset.v===(v==="pay"?"home":v))b.setAttribute("aria-current","page")});
+ $("fab").hidden=v==="pay";render();scrollTo(0,0)}
+document.querySelectorAll("nav button").forEach(function(b){b.onclick=function(){show(b.dataset.v)}});
+
+function row(t){var p=person(t.pid),nm=t.kind==="exp"?t.cat:(p?p.name:"Removed");
+ return '<div class="row"><div><b>'+esc(nm)+'</b><small>'+esc(t.date)+(t.note?" · "+esc(t.note):"")+'</small></div><div style="display:flex;gap:8px;align-items:center"><span class="n">'+inr(t.amt)+'</span>'+(t.kind==="pay"?'<button class="tg '+(t.status==="paid"?"pd":"pn")+'" data-tog="'+t.id+'">'+(t.status==="paid"?"Paid":"Pending")+'</button>':"")+'<button class="tg" aria-label="Delete" data-del="'+t.id+'">✕</button></div></div>'}
+
+function render(){
+ var today=day(),mo=today.slice(0,7),td=0,mt=0;
+ S.txns.forEach(function(t){if(!counts(t))return;if(t.date===today)td+=t.amt;if(t.date.slice(0,7)===mo)mt+=t.amt});
+ var dueN=S.people.filter(function(p){return p.due&&due(p.due)<=5}).length;
+ var pend=S.txns.filter(function(t){return t.kind==="pay"&&t.status==="pending"&&Date.now()-t.ts<36e5}).sort(function(a,b){return b.ts-a.ts})[0];
+ var last=S.txns.slice().sort(function(a,b){return b.ts-a.ts}).slice(0,3);
+ $("v-home").innerHTML=(pend?'<div class="bn">Did your '+inr(pend.amt)+' payment to '+esc((person(pend.pid)||{}).name||"")+' go through?<div><button data-ok="'+pend.id+'">Yes, paid</button><button data-no="'+pend.id+'">Not paid</button></div></div>':"")+
+ '<p class="mu" style="margin:0">Spent today</p><div class="big">'+inr(td)+'</div><p class="mu">'+inr(mt)+' this month</p>'+
+ '<button class="st '+(dueN?"a":"")+'" data-go="people">'+(dueN?dueN+(dueN>1?" bills":" bill")+" due this week":"All clear")+'</button>'+
+ '<button class="btn" data-go="pay" style="margin:6px 0 18px">Pay</button>'+
+ '<div class="card"><h2>Recent</h2>'+(last.length?last.map(row).join(""):'<div class="empty">Nothing yet. Tap + to add your first expense.</div>')+'</div>';
+ var all=S.txns.slice().sort(function(a,b){return b.ts-a.ts}),cs={};
+ all.forEach(function(t){if(counts(t)&&t.date.slice(0,7)===mo){var c=t.kind==="exp"?t.cat:((person(t.pid)||{}).cat||"Other");cs[c]=(cs[c]||0)+t.amt}});
+ $("v-hist").innerHTML='<div class="card"><h2>This month by type</h2>'+(Object.keys(cs).length?Object.keys(cs).map(function(k){return '<div class="row"><span>'+esc(k)+'</span><span class="n">'+inr(cs[k])+'</span></div>'}).join(""):'<div class="empty">Nothing yet.</div>')+'</div><div class="card"><h2>All activity</h2>'+(all.length?all.map(row).join(""):'<div class="empty">No activity yet.</div>')+'</div>';
+ $("v-people").innerHTML='<div class="card"><h2>People and billers</h2>'+(S.people.length?S.people.map(function(p){var sp=0;S.txns.forEach(function(t){if(t.pid===p.id&&t.status==="paid")sp+=t.amt});
+  return '<div class="row"><div><b>'+esc(p.name)+'</b> <span class="tg">'+esc(p.cat)+'</span><small>'+esc(p.upi)+'</small>'+(p.due?'<small style="color:'+(due(p.due)<=5?"var(--wn)":"inherit")+'">Due day '+p.due+'</small>':"")+'<small>'+inr(sp)+' paid</small></div><div><button class="tg" data-pay="'+p.id+'">Pay</button> <button class="tg" aria-label="Delete" data-dp="'+p.id+'">✕</button></div></div>'}).join(""):'<div class="empty">Add someone you pay often.</div>')+'</div><button class="btn" id="addp">Add person or biller</button>';
+ var dl=Math.max(0,Math.ceil(CONFIG.FREE_DAYS-(Date.now()-S.start)/864e5));
+ $("v-me").innerHTML='<div class="card"><h2>Check-in streak</h2><div class="big">'+streak()+'</div><p class="mu">days in a row</p></div><div class="card"><h2>Plan</h2><p>'+(S.plan?"Paid plan, unlimited payments.":(CONFIG.PRICING_ON?(dl>0?"Free month: "+dl+" days left.":"Free plan: 20 payments a month."):"Free beta: everything unlimited."))+'</p>'+(CONFIG.PRICING_ON&&!S.plan?'<button class="btn o" id="up">Upgrade for ₹'+CONFIG.PRICE+'/month</button>':"")+'</div><div class="card"><h2>Your data</h2><p class="mu">Stored on this device only. No ads, no trackers.</p><button class="btn o" id="csv">Export CSV</button><button class="btn o" id="wipe">Delete all data</button></div>';
+ var pc=$("pp").value;$("pp").innerHTML=S.people.length?S.people.map(function(p){return '<option value="'+p.id+'">'+esc(p.name)+'</option>'}).join(""):'<option value="">Add a person first</option>';if(pc&&person(pc))$("pp").value=pc;
+}
+
+function link(p,a,n,app){var q="pa="+encodeURIComponent(p.upi)+"&pn="+encodeURIComponent(p.name)+"&am="+a.toFixed(2)+"&cu=INR"+(n?"&tn="+encodeURIComponent(n):"");
+ return({upi:"upi://pay?",gpay:"tez://upi/pay?",phonepe:"phonepe://pay?",paytm:"paytmmp://pay?"}[app]||"upi://pay?")+q}
+$("go").onclick=function(){var p=person($("pp").value),a=parseFloat($("am").value);
+ if(!p){$("pe").textContent="Add a person or biller first.";return}
+ if(!(a>0)){$("pe").textContent="Enter an amount above 0.";return}
+ if(gateBlocked()){$("du").showModal();return}
+ $("pe").textContent="";var n=$("nt").value.trim();
+ S.txns.push({id:uid(),kind:"pay",pid:p.id,amt:a,note:n,date:day(),ts:Date.now(),status:"pending"});save();
+ $("am").value="";$("nt").value="";show("home");location.href=link(p,a,n,$("ap").value)};
+
+$("fab").onclick=function(){$("qa").value="";$("qn").value="";$("qe").textContent="";$("dq").showModal();$("qa").focus()};
+$("qc").innerHTML=CATS.map(function(c){return '<button type="button" data-c="'+c+'" aria-pressed="'+(c===qcat)+'">'+c+'</button>'}).join("");
+$("qc").onclick=function(e){var c=e.target.dataset.c;if(!c)return;qcat=c;[].forEach.call($("qc").children,function(b){b.setAttribute("aria-pressed",b.dataset.c===c)})};
+$("qx").onclick=function(){$("dq").close()};
+$("qs").onclick=function(){var a=parseFloat($("qa").value);if(!(a>0)){$("qe").textContent="Enter an amount above 0.";return}
+ S.txns.push({id:uid(),kind:"exp",cat:qcat,amt:a,note:$("qn").value.trim(),date:day(),ts:Date.now()});save();$("dq").close();render()};
+
+$("nx").onclick=function(){$("dp").close()};
+$("ns").onclick=function(){var n=$("nn").value.trim(),u=$("nu").value.trim(),d=parseInt($("nd").value,10);
+ if(!n){$("ne").textContent="Enter a name.";return}
+ if(!/^[\w.\-]{2,}@[A-Za-z]{2,}$/.test(u)){$("ne").textContent="Enter a valid UPI ID, like name@bank.";return}
+ S.people.push({id:uid(),name:n,upi:u,cat:$("nc").value,due:(d>=1&&d<=31)?d:null});save();
+ $("nn").value=$("nu").value=$("nd").value="";$("ne").textContent="";$("dp").close();render()};
+
+$("ux").onclick=function(){$("du").close()};
+function upgrade(){var e=$("ue");e.textContent="";
+ fetch("/.netlify/functions/create-order",{method:"POST"}).then(function(r){return r.json()}).then(function(o){
+  if(o.error)throw new Error(o.error);
+  return new Promise(function(res,rej){var s=document.createElement("script");s.src="https://checkout.razorpay.com/v1/checkout.js";s.onload=res;s.onerror=function(){rej(new Error("Could not load checkout"))};document.head.appendChild(s)}).then(function(){
+   new Razorpay({key:o.key,order_id:o.order_id,amount:o.amount,currency:"INR",name:"Pay Desk",description:"Monthly plan",
+    handler:function(r){fetch("/.netlify/functions/verify",{method:"POST",body:JSON.stringify(r)}).then(function(x){return x.json()}).then(function(v){
+     if(v.ok){S.plan=true;save();$("du").close();render()}else e.textContent="Payment could not be verified."})}}).open()})
+ }).catch(function(err){e.textContent=err.message||"Something went wrong."})}
+$("ub").onclick=upgrade;
+
+document.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var d=b.dataset;
+ if(d.go)show(d.go);
+ if(d.pay){$("pp").value=d.pay;show("pay");$("am").focus()}
+ if(d.tog){S.txns.forEach(function(t){if(t.id===d.tog)t.status=t.status==="paid"?"pending":"paid"});save();render()}
+ if(d.ok){S.txns.forEach(function(t){if(t.id===d.ok)t.status="paid"});save();render()}
+ if(d.no){S.txns=S.txns.filter(function(t){return t.id!==d.no});save();render()}
+ if(d.del){S.txns=S.txns.filter(function(t){return t.id!==d.del});save();render()}
+ if(d.dp&&confirm("Delete this person? Past payments stay in History.")){S.people=S.people.filter(function(p){return p.id!==d.dp});save();render()}
+ if(b.id==="addp")$("dp").showModal();
+ if(b.id==="up")$("du").showModal();
+ if(b.id==="wipe"&&confirm("Delete all data on this device?")){S={people:[],txns:[],start:Date.now(),plan:false,days:[day()]};save();render()}
+ if(b.id==="csv"){var rows=[["Date","Type","Name","Amount","Status","Note"]].concat(S.txns.map(function(t){return[t.date,t.kind==="exp"?"Expense":"Payment",t.kind==="exp"?t.cat:(person(t.pid)||{}).name||"Removed",t.amt,t.status||"",t.note||""]}));
+  var s=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(",")}).join("\n"),a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([s],{type:"text/csv"}));a.download="paydesk.csv";a.click()}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden)render()});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(function(){});
+show("home");
+</script></body></html>
